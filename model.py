@@ -1,44 +1,34 @@
 import pandas as pd
-"""
-This script trains and evaluates multiple regression models to predict real estate prices 
-based on features such as the number of rooms, size, and postal code. The best-performing 
-model is saved for future use.
-
-Workflow:
-    1. Load real estate data from a JSON file.
-    2. Preprocess the data by converting columns to numeric and handling missing values.
-    3. Split the data into training and testing sets.
-    4. Train and evaluate multiple regression models (Random Forest, Gradient Boosting, 
-       Linear Regression, and XGBoost).
-    5. Select the best model based on the lowest Mean Absolute Error (MAE).
-    6. Save the best model to a file using joblib.
-
-Outputs:
-    - Prints the performance metrics (MAE, MSE, RMSE, R2) for each model.
-    - Prints the name and MAE of the best-performing model.
-    - Saves the best model to a file named "best_immoscout_model.joblib".
-"""
-import json
 import joblib
+from pymongo import MongoClient
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 import xgboost as xgb
 
-with open("immo_spider/immoscout_listings.json", "r") as f:
-    data = json.load(f)
+client = MongoClient("mongodb://localhost:27017/")
+db = client["immoscout_db"]
+collection = db["listings"]
+
+data = list(collection.find())
 
 df = pd.DataFrame(data)
 
+if "_id" in df.columns:
+    df = df.drop(columns=["_id"])
+
+df = df.drop(columns=["location", "canton", "page"], errors="ignore")
 df["price"] = pd.to_numeric(df["price"], errors="coerce")
 df["rooms"] = pd.to_numeric(df["rooms"], errors="coerce")
 df["size"] = pd.to_numeric(df["size"], errors="coerce")
-df["postal_code"] = pd.to_numeric(df["postal_code"], errors="coerce")
+df["postal_code"] = df["postal_code"].astype(str)
 
-df = df.dropna(subset=["price", "rooms", "size"])
+df = df.dropna(subset=["price", "rooms", "size", "postal_code"])
 
-X = df[["rooms", "size", "postal_code"]]
+df = pd.get_dummies(df, columns=["postal_code"], prefix="plz")
+
+X = df.drop(columns=["price"])
 y = df["price"]
 
 X_train, X_test, y_train, y_test = train_test_split(
@@ -75,3 +65,5 @@ for model_name, model in models.items():
 print(f"\nDas beste Modell ist {best_model_name} mit einem MAE von {best_mae}")
 
 joblib.dump(best_model, "best_immoscout_model.joblib")
+
+client.close()

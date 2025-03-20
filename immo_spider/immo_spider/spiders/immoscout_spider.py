@@ -1,11 +1,6 @@
-"""
-This module contains a Scrapy spider for scraping property
-listings from the ImmoScout24 website. The spider extracts
-details such as the number of rooms, size, price, location,
-canton, and postal code from each listing."""
-
 import scrapy
 import re
+from pymongo import MongoClient
 
 
 class ImmoscoutSpider(scrapy.Spider):
@@ -15,26 +10,17 @@ class ImmoscoutSpider(scrapy.Spider):
         "https://www.immoscout24.ch/de/immobilien/mieten/ort-zuerich?=pn=1",
     ]
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.client = MongoClient("mongodb://localhost:27017/")
+        self.db = self.client["immoscout_db"]  
+        self.collection = self.db["listings"]  
+
+        # Alte Einträge in der Collection löschen
+        self.collection.delete_many({})
+        self.logger.info("Alle alten Einträge in der MongoDB wurden gelöscht.")
+
     def parse(self, response):
-        """
-        Parses the response from the current page of the ImmoScout24 website and extracts property listings.
-        This method processes the HTML response to extract details about property listings such as the number
-        of rooms, size, price, location, canton, and postal code. It also handles pagination by generating
-        requests for the next page if listings are found.
-        Args:
-            response (scrapy.http.Response): The HTTP response object containing the page's HTML content.
-        Yields:
-            dict: A dictionary containing the extracted property details:
-                - 'rooms' (str or None): The number of rooms in the property, cleaned and formatted.
-                - 'size' (str or None): The size of the property in square meters, cleaned and formatted.
-                - 'price' (str or None): The price of the property, cleaned and formatted.
-                - 'location' (str or None): The location of the property, stripped of extra whitespace.
-                - 'canton' (str): The canton extracted from the URL.
-                - 'postal_code' (str or None): The postal code extracted from the location.
-                - 'page' (str): The URL of the current page being scraped.
-        Yields:
-            scrapy.Request: A request object for the next page of listings if more pages are available.
-        """
         page_number = int(response.url.split("pn=")[-1])
         listings = response.css("div.ResultList_listItem_j5Td_")
 
@@ -62,7 +48,8 @@ class ImmoscoutSpider(scrapy.Spider):
             canton = response.url.split("-")[-1].split("?")[0]
             postal_code = self.extract_postal_code(location)
 
-            yield {
+            # Daten in MongoDB speichern
+            self.collection.insert_one({
                 "rooms": rooms,
                 "size": size,
                 "price": price,
@@ -70,7 +57,7 @@ class ImmoscoutSpider(scrapy.Spider):
                 "canton": canton,
                 "postal_code": postal_code,
                 "page": response.url,
-            }
+            })
 
         next_page = page_number + 1
         canton = response.url.split("-")[-1].split("?")[0]
@@ -79,15 +66,6 @@ class ImmoscoutSpider(scrapy.Spider):
         yield scrapy.Request(next_page_url, callback=self.parse)
 
     def clean_rooms(self, rooms):
-        """
-        Cleans and extracts the number of rooms from a given string.
-
-        Args:
-            rooms (str): A string containing room information, typically with numeric values.
-
-        Returns:
-            int: The extracted number of rooms as an integer if found, otherwise None.
-        """
         if rooms:
             match = re.search(r"(\d+)", rooms)
             if match:
@@ -95,16 +73,6 @@ class ImmoscoutSpider(scrapy.Spider):
         return None
 
     def clean_size(self, size):
-        """
-        Extracts and cleans the numeric value representing size from a given string.
-
-        Args:
-            size (str): A string potentially containing a numeric size value.
-
-        Returns:
-            int or None: The extracted numeric size as an integer if found,
-            otherwise None.
-        """
         if size:
             match = re.search(r"(\d+)", size)
             if match:
@@ -112,20 +80,6 @@ class ImmoscoutSpider(scrapy.Spider):
         return None
 
     def clean_price(self, price):
-        """
-        Cleans and converts a price string into a float.
-
-        This method removes currency symbols, special characters, and whitespace
-        from the input price string, then attempts to convert it into a float.
-        If the conversion fails, a warning is logged, and None is returned.
-
-        Args:
-            price (str): The price string to be cleaned and converted.
-
-        Returns:
-            float or None: The cleaned price as a float, or None if the input is
-            invalid or cannot be converted.
-        """
         if price:
             price = price.replace("CHF", "").replace("’", "").replace("–", "").strip()
             try:
@@ -136,17 +90,11 @@ class ImmoscoutSpider(scrapy.Spider):
         return None
 
     def extract_postal_code(self, location):
-        """
-        Extracts the postal code from a given location string.
-
-        Args:
-            location (str): A string containing the location information.
-
-        Returns:
-            str or None: The extracted 4-digit postal code if found, otherwise None.
-        """
         if location:
             match = re.search(r"(\d{4})", location)
             if match:
                 return match.group(1)
         return None
+
+    def closed(self, reason):
+        self.client.close()
