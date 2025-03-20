@@ -29,7 +29,6 @@ dist/
 .scrapy/
 
 # Output-Daten
-*.csv
 *.json
 *.parquet
 

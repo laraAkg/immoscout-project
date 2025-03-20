@@ -29,10 +29,11 @@ from flask import Flask, render_template, request
 import joblib
 import numpy as np
 import csv
+import pandas as pd
 
 app = Flask(__name__)
 
-model = joblib.load("best_immoscout_model.joblib")
+model = joblib.load("immo_spider/best_immoscout_model.joblib")
 
 plz_ort = {}
 with open("app/plz_ort.csv", mode="r") as infile:
@@ -54,7 +55,7 @@ def predict():
     error_message = None
     prediction = None
     try:
-        rooms = int(request.form["rooms"])
+        rooms = float(request.form["rooms"])
         size = float(request.form["size"])
         postal_code = request.form["postal_code"]
 
@@ -66,8 +67,24 @@ def predict():
         if rooms <= 0 or size <= 0 or postal_code not in plz_ort:
             raise ValueError("Ungültige Eingabewerte.")
 
-        input_data = np.array([rooms, size, postal_code]).reshape(1, -1)
-        predicted_price = model.predict(input_data)[0]
+        # Erstelle ein DataFrame mit den Eingabedaten
+        input_df = pd.DataFrame(
+            [[rooms, size, postal_code]],
+            columns=["rooms", "size", "postal_code"]
+        )
+
+        # Wende One-Hot-Encoding auf die Postleitzahl an
+        input_df["postal_code"] = input_df["postal_code"].astype(str)
+        input_df = pd.get_dummies(input_df, columns=["postal_code"], prefix="plz")
+
+        # Stelle sicher, dass die Spaltenreihenfolge mit dem Modell übereinstimmt
+        for col in model.feature_names_in_:
+            if col not in input_df.columns:
+                input_df[col] = 0
+        input_df = input_df[model.feature_names_in_]
+
+        # Vorhersage durchführen
+        predicted_price = model.predict(input_df)[0]
         prediction = f"Vorhergesagter Preis: CHF {predicted_price:.2f}"
 
     except Exception as e:
@@ -79,7 +96,6 @@ def predict():
         error_message=error_message,
         plz_ort=plz_ort,
     )
-
 
 if __name__ == "__main__":
     app.run(debug=True)
