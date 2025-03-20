@@ -36,7 +36,7 @@ app = Flask(__name__)
 model = joblib.load("immo_spider/best_immoscout_model.joblib")
 
 plz_ort = {}
-with open("app/plz_ort.csv", mode="r") as infile:
+with open("data/plz_ort.csv", mode="r") as infile:
     reader = csv.reader(infile)
     next(reader)
     for rows in reader:
