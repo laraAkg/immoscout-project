@@ -1,92 +1,80 @@
 import pandas as pd
-import re
+import json
 import joblib
 from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
-from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+import xgboost as xgb
 
 # ---------------------------------
 # 1. Daten laden & vorbereiten
 # ---------------------------------
-df = pd.read_csv('immoscout_clean.csv')
+# Lade die JSON-Daten
+with open('immo_spider/immoscout_listings.json', 'r') as f:
+    data = json.load(f)
 
-# PLZ extrahieren
-df['plz_code'] = df['plz'].str.extract(r'(\d{4})').astype(float)
-
-# NaNs entfernen
-df = df.dropna(subset=['rooms', 'size_m2', 'plz_code', 'price_chf'])
-
-# ---------------------------------
-# 2. Features & Target
-# ---------------------------------
-X = df[['rooms', 'size_m2', 'plz_code']]
-y = df['price_chf']
+# Wandeln Sie die JSON-Daten in einen DataFrame um
+df = pd.DataFrame(data)
 
 # ---------------------------------
-# 3. Split
+# 2. Datenvorbereitung
 # ---------------------------------
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.2, random_state=42
-)
+# Stellen sicher, dass alle numerischen Werte als Zahlen interpretiert werden
+df['price'] = pd.to_numeric(df['price'], errors='coerce')
+df['rooms'] = pd.to_numeric(df['rooms'], errors='coerce')
+df['size'] = pd.to_numeric(df['size'], errors='coerce')
+df['postal_code'] = pd.to_numeric(df['postal_code'], errors='coerce')
+
+# Entfernen von Zeilen mit fehlenden Werten
+df = df.dropna(subset=['price', 'rooms', 'size'])
+
+# Features und Zielvariable definieren
+X = df[['rooms', 'size', 'postal_code']]  # Wir nehmen "rooms", "size", "postal_code" als Features
+y = df['price']  # Wir nehmen den "price" als Zielvariable
 
 # ---------------------------------
-# 4. Modelle definieren
+# 3. Train-Test-Split
+# ---------------------------------
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# ---------------------------------
+# 4. Modelle trainieren
 # ---------------------------------
 models = {
-    "LinearRegression": LinearRegression(),
-    "RandomForest": RandomForestRegressor(n_estimators=100, random_state=42),
-    "GradientBoosting": GradientBoostingRegressor(n_estimators=100, random_state=42)
+    'Random Forest': RandomForestRegressor(n_estimators=100, random_state=42),
+    'Gradient Boosting': GradientBoostingRegressor(n_estimators=100, random_state=42),
+    'Linear Regression': LinearRegression(),
+    'XGBoost': xgb.XGBRegressor(n_estimators=100, random_state=42)
 }
 
+# ---------------------------------
+# 5. Modellbewertung
+# ---------------------------------
 best_model = None
-best_score = -float('inf')
-results = []
+best_mae = float('inf')
+best_model_name = ""
 
-# ---------------------------------
-# 5. Modelle trainieren & vergleichen
-# ---------------------------------
-for name, model in models.items():
-    # nur Linear Regression braucht Scaling
-    if name == "LinearRegression":
-        scaler = StandardScaler()
-        X_train_scaled = scaler.fit_transform(X_train)
-        X_test_scaled = scaler.transform(X_test)
-        model.fit(X_train_scaled, y_train)
-        y_pred = model.predict(X_test_scaled)
-    else:
-        model.fit(X_train, y_train)
-        y_pred = model.predict(X_test)
+# Trainiere jedes Modell und bewerten Sie die Leistung
+for model_name, model in models.items():
+    model.fit(X_train, y_train)
+    y_pred = model.predict(X_test)
     
-    # Metriken
-    r2 = r2_score(y_test, y_pred)
+    # Berechnung der Fehlerkennzahlen
     mae = mean_absolute_error(y_test, y_pred)
     mse = mean_squared_error(y_test, y_pred)
+    rmse = mse**0.5
+    r2 = r2_score(y_test, y_pred)
     
-    results.append({
-        "model": name,
-        "R2": round(r2, 3),
-        "MAE": round(mae, 2),
-        "MSE": round(mse, 2)
-    })
-
-    print(f"\n{name}: R2={r2:.3f}, MAE={mae:.2f}, MSE={mse:.2f}")
-
-    # bestes Modell speichern
-    if r2 > best_score:
-        best_score = r2
+    print(f"{model_name} - MAE: {mae}, MSE: {mse}, RMSE: {rmse}, R2: {r2}")
+    
+    # Wählen Sie das Modell mit dem niedrigsten MAE aus
+    if mae < best_mae:
+        best_mae = mae
         best_model = model
-        best_model_name = name
-        if name == "LinearRegression":
-            joblib.dump((model, scaler), "best_model.joblib")
-        else:
-            joblib.dump(model, "best_model.joblib")
+        best_model_name = model_name
 
-# ---------------------------------
-# 6. Ergebnisse loggen
-# ---------------------------------
-print("\nVergleich:")
-print(pd.DataFrame(results))
-print(f"\n➡️ Bestes Modell: {best_model_name} mit R² = {best_score:.3f}")
-print("Modell wurde als best_model.joblib gespeichert.")
+print(f"\nDas beste Modell ist {best_model_name} mit einem MAE von {best_mae}")
+
+# Speichern des besten Modells
+joblib.dump(best_model, 'best_immoscout_model.joblib')
