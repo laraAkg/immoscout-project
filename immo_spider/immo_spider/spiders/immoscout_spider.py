@@ -1,22 +1,22 @@
 import scrapy
 import re
 from pymongo import MongoClient
-
+from scrapy.utils.project import get_project_settings
 
 class ImmoscoutSpider(scrapy.Spider):
     name = "immoscout_spider"
     allowed_domains = ["immoscout24.ch"]
     start_urls = [
-        "https://www.immoscout24.ch/de/immobilien/mieten/ort-zuerich?=pn=1",
+        "https://www.immoscout24.ch/de/immobilien/mieten/ort-zuerich?pn=1",
     ]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.client = MongoClient("mongodb://localhost:27017/")
-        self.db = self.client["immoscout_db"]  
-        self.collection = self.db["listings"]  
-
-        # Alte Einträge in der Collection löschen
+        settings = get_project_settings()
+        mongo_uri = settings.get("MONGO_URI")
+        self.client = MongoClient(mongo_uri)
+        self.db = self.client["immoscout_db"]
+        self.collection = self.db["listings"]
         self.collection.delete_many({})
         self.logger.info("Alle alten Einträge in der MongoDB wurden gelöscht.")
 
@@ -48,7 +48,6 @@ class ImmoscoutSpider(scrapy.Spider):
             canton = response.url.split("-")[-1].split("?")[0]
             postal_code = self.extract_postal_code(location)
 
-            # Daten in MongoDB speichern
             self.collection.insert_one({
                 "rooms": rooms,
                 "size": size,
@@ -67,14 +66,14 @@ class ImmoscoutSpider(scrapy.Spider):
 
     def clean_rooms(self, rooms):
         if rooms:
-            match = re.search(r"(\d+)", rooms)
+            match = re.search(r"(\\d+)", rooms)
             if match:
                 return int(match.group(1))
         return None
 
     def clean_size(self, size):
         if size:
-            match = re.search(r"(\d+)", size)
+            match = re.search(r"(\\d+)", size)
             if match:
                 return int(match.group(1))
         return None
@@ -91,7 +90,7 @@ class ImmoscoutSpider(scrapy.Spider):
 
     def extract_postal_code(self, location):
         if location:
-            match = re.search(r"(\d{4})", location)
+            match = re.search(r"(\\d{4})", location)
             if match:
                 return match.group(1)
         return None

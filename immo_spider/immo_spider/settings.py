@@ -7,7 +7,8 @@
 #     https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
 #     https://docs.scrapy.org/en/latest/topics/spider-middleware.html
 
-BOT_NAME = "immo_spider"
+# MongoDB Config aus Umgebungsvariablen laden
+
 
 SPIDER_MODULES = ["immo_spider.spiders"]
 NEWSPIDER_MODULE = "immo_spider.spiders"
@@ -31,6 +32,21 @@ CONCURRENT_REQUESTS = 1  # nur ein Request gleichzeitig
 RETRY_ENABLED = True
 RETRY_TIMES = 3  # max. 3 Versuche
 RETRY_HTTP_CODES = [403, 429, 500, 502, 503, 504]  # typische Blockierungen
+
+import os
+MONGO_URI = os.getenv("MONGO_URI")
+MONGO_DB = "immoscout_db"
+MONGO_COLLECTION = "listings"
+
+# Pipelines (falls nötig)
+# ITEM_PIPELINES = {
+#    'immo_spider.pipelines.ImmoSpiderPipeline': 300,
+# }
+
+# Logging
+LOG_LEVEL = "INFO"
+
+BOT_NAME = "immo_spider"
 
 # Configure maximum concurrent requests performed by Scrapy (default: 16)
 #CONCURRENT_REQUESTS = 32
