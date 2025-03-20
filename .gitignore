@@ -1,0 +1,37 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+venv/
+.env/
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+
+# Flask & general logs
+*.log
+
+# Jupyter Notebook checkpoints (falls du auch mit Notebooks arbeitest)
+.ipynb_checkpoints
+
+# Mac-specific files
+.DS_Store
+
+# Modell-Dateien
+*.joblib
+*.pkl
+
+# Scrapy Cache
+.scrapy/
+
+# Output-Daten
+*.csv
+*.json
+*.parquet
+
+# VSCode settings
+.vscode/
