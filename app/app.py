@@ -87,6 +87,7 @@ def predict():
         predicted_price = model.predict(input_df)[0]
         prediction = f"Vorhergesagter Preis: CHF {predicted_price:.2f}"
 
+
     except Exception as e:
         error_message = f"Fehler: {str(e)}"
 
