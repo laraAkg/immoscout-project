@@ -5,30 +5,66 @@ on:
     branches: [ main ]
 
 jobs:
-  build-and-deploy:
+  # 1️⃣ Scrapy + Modelltraining
+  data-and-train:
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout Repository
-      uses: actions/checkout@v3
+      - name: Checkout Repository
+        uses: actions/checkout@v3
 
-    - name: Login to Azure Container Registry (ACR)
-      uses: azure/docker-login@v1
-      with:
-        login-server: lara283.azurecr.io
-        username: ${{ secrets.AZURE_ACR_USERNAME }}
-        password: ${{ secrets.AZURE_ACR_PASSWORD }}
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
 
-    - name: Build Docker Image
-      run: |
-        docker build -t lara283.azurecr.io/immoscout:latest .
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
 
-    - name: Push Docker Image to ACR
-      run: |
-        docker push lara283.azurecr.io/immoscout:latest
+      - name: Run Scrapy & Model Training
+        run: |
+          scrapy crawl immoscout_spider -o immo_spider/immoscout_listings.json
+          python model.py
 
-    - name: Deploy to Azure Web App for Containers
-      uses: azure/webapps-deploy@v2
-      with:
-        app-name: immoscout
-        slot-name: production
-        images: lara283.azurecr.io/immoscout:latest
+      - name: Upload build artifacts (JSON & Modell)
+        uses: actions/upload-artifact@v3
+        with:
+          name: build-artifacts
+          path: |
+            immo_spider/immoscout_listings.json
+            best_immoscout_model.joblib
+
+  # 2️⃣ Docker Build & Azure Deployment
+  build-and-deploy:
+    needs: data-and-train
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: build-artifacts
+
+      - name: Login to Azure Container Registry (ACR)
+        uses: azure/docker-login@v1
+        with:
+          login-server: lara283.azurecr.io
+          username: ${{ secrets.AZURE_ACR_USERNAME }}
+          password: ${{ secrets.AZURE_ACR_PASSWORD }}
+
+      - name: Build Docker Image
+        run: |
+          docker build -t lara283.azurecr.io/immoscout:latest .
+
+      - name: Push Docker Image to ACR
+        run: |
+          docker push lara283.azurecr.io/immoscout:latest
+
+      - name: Deploy to Azure Web App for Containers
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: immoscout
+          slot-name: production
+          images: lara283.azurecr.io/immoscout:latest
