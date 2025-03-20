@@ -23,7 +23,9 @@ jobs:
 
       - name: Run Scrapy & Model Training
         run: |
-          scrapy crawl immoscout_spider -o immo_spider/immoscout_listings.json
+          cd immo_spider
+          scrapy crawl immoscout_spider -o ../immo_spider/immoscout_listings.json
+          cd ..
           python model.py
 
       - name: Upload build artifacts (JSON & Modell)
