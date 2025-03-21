@@ -18,7 +18,6 @@ client = MongoClient(MONGO_URI)
 db = client["immoscout_db"]
 collection = db["listings"]
 
-# Daten laden
 data = list(collection.find())
 df = pd.DataFrame(data)
 
