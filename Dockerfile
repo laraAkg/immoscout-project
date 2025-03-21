@@ -8,7 +8,7 @@ WORKDIR /usr/src/app/backend
 COPY . .
 
 # Abhängigkeiten installieren
-RUN pip install --upgrade pip && pip install -r /usr/src/app/requirements.txt
+RUN pip install --upgrade pip && pip install -r requirements.txt
 
 # Port öffnen
 EXPOSE 5000
