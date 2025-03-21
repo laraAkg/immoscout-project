@@ -22,14 +22,12 @@ jobs:
           pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run Scrapy & MongoDB Upload
+      - name: Run Scrapy Spider (direkt mit Mongo)
         env:
           MONGO_URI: ${{ secrets.MONGO_URI }}
         run: |
           cd immo_spider
-          scrapy crawl immoscout_spider -s CLOSESPIDER_PAGECOUNT=50 -o immoscout_listings.json
-          cd ..
-          python immo_spider/mongo_import.py -c immoscout_data -i immo_spider/immoscout_listings.json -u "${MONGO_URI}"
+          scrapy crawl immoscout_spider -s CLOSESPIDER_PAGECOUNT=50
 
       - name: Model Training & Save to Azure Blob
         env:
