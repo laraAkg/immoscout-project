@@ -1,0 +1,45 @@
+name: ModelOps (Update Model)
+# Requires GitHub Action Secrets: 
+#   AZURE_STORAGE_CONNECTION_STRING 
+#   MONGO_URI
+
+on:
+  workflow_dispatch:
+
+jobs:
+  model:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+          
+      - name: Install Python Packages
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          
+      - name: Scrape + Store in Mongo
+        env:
+          MONGO_URI: ${{ secrets.MONGO_URI }}
+        run: |
+          cd immo_spider
+          scrapy crawl immoscout_spider -s CLOSESPIDER_PAGECOUNT=50
+          # Wenn dein Spider das direkt in Mongo speichert, reicht das hier
+
+      - name: Train Model
+        env:
+          MONGO_URI: ${{ secrets.MONGO_URI }}
+        run: |
+          python model.py -u "${MONGO_URI}"
+
+      - name: Upload Model to Azure Blob
+        env:
+          AZURE_STORAGE_CONNECTION_STRING: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}
+        run: |
+          python save.py -c "${AZURE_STORAGE_CONNECTION_STRING}"
