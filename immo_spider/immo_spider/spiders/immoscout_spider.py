@@ -23,31 +23,31 @@ class ImmoscoutSpider(scrapy.Spider):
 
         self.client = MongoClient(MONGO_URI)
 
+        # Datenbank auswählen
+        self.db = self.client["immoscout_db"]
+
+        # Collection auswählen
         self.collection = self.db["listings"]
 
+        # Alte Einträge löschen
         self.collection.delete_many({})
         self.logger.info("Alle alten Einträge in der MongoDB wurden gelöscht.")
 
     def parse(self, response):
         """ Sucht Listings auf einer Seite und speichert sie in MongoDB. """
-        # Aktuelle Seitenzahl
         page_number = int(response.url.split("pn=")[-1])
-
-        # CSS-Selektor zum Finden der Listings
         listings = response.css("div.ResultList_listItem_j5Td_")
 
         self.logger.info(
             f"Scraping Seite {page_number} - {len(listings)} Listings gefunden."
         )
 
-        # Abbruch, wenn keine Listings mehr da sind
         if not listings:
             self.logger.info(
                 f"Seite {page_number} enthält keine Listings mehr. Beende den Crawl."
             )
             return
 
-        # Einzelne Listings durchgehen
         for listing in listings:
             rooms = listing.css("strong:nth-of-type(1)::text").get()
             size = listing.css("strong[title]::text").get()
@@ -56,16 +56,13 @@ class ImmoscoutSpider(scrapy.Spider):
             ).get()
             location = listing.css("address::text").get()
 
-            # Daten bereinigen
             rooms = self.clean_rooms(rooms)
             size = self.clean_size(size)
             price = self.clean_price(price)
 
-            # Kanton aus URL (nicht immer korrekt, aber so wars im Code)
             canton = response.url.split("-")[-1].split("?")[0]
             postal_code = self.extract_postal_code(location)
 
-            # In MongoDB speichern
             self.collection.insert_one({
                 "rooms": rooms,
                 "size": size,
@@ -76,7 +73,6 @@ class ImmoscoutSpider(scrapy.Spider):
                 "page": response.url,
             })
 
-        # Nächste Seite
         next_page = page_number + 1
         canton = response.url.split("-")[-1].split("?")[0]
         next_page_url = f"https://www.immoscout24.ch/de/immobilien/mieten/ort-{canton}?pn={next_page}"
