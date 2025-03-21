@@ -72,8 +72,8 @@ for model_name, model in models.items():
 print(f"\n✅ Das beste Modell ist {best_model_name} mit einem MAE von {best_mae:.2f}")
 
 # Speichern als .pkl-Datei
-with open("model/immoscout_model.pkl", "wb") as f:
+with open("immoscout_model.pkl", "wb") as f:
     pickle.dump(best_model, f)
-print("💾 Modell wurde als '../immoscout_model.pkl' gespeichert")
+print("💾 Modell wurde als 'immoscout_model.pkl' gespeichert")
 
 client.close()
