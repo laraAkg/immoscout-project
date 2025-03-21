@@ -33,10 +33,11 @@ jobs:
           cd ..
 
       - name: Train Model
+        run: |
+          cd model
+          python model.py
         env:
           MONGO_URI: ${{ secrets.MONGO_URI }}
-        run: |
-          python model.py -u "${MONGO_URI}"
 
       - name: Upload Model to Azure Blob
         env:
