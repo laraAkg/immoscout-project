@@ -6,7 +6,7 @@ import pandas as pd
 import os
 from azure.storage.blob import BlobServiceClient
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder="../frontend/templates")
 
 # Azure Blob Storage Setup
 AZURE_BLOB_CONN_STR = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
