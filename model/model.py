@@ -8,12 +8,10 @@ from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 import xgboost as xgb
 
-MONGO_URI = os.getenv("MONGO_URI") or os.getenv("MONGO_URI")
 
-if not MONGO_URI:
-    raise ValueError("❌ MONGO_URI ist nicht gesetzt! Bitte ENV-Variable oder Secret einrichten.")
+
+MONGO_URI = os.getenv("MONGO_URI")
 client = MongoClient(MONGO_URI)
-
 db = client["immoscout_db"]
 collection = db["listings"]
 
@@ -74,8 +72,8 @@ for model_name, model in models.items():
 print(f"\n✅ Das beste Modell ist {best_model_name} mit einem MAE von {best_mae:.2f}")
 
 # Speichern als .pkl-Datei
-with open("../best_immoscout_model.pkl", "wb") as f:
+with open("model/immoscout_model.pkl", "wb") as f:
     pickle.dump(best_model, f)
-print("💾 Modell wurde als '../best_immoscout_model.pkl' gespeichert")
+print("💾 Modell wurde als '../immoscout_model.pkl' gespeichert")
 
 client.close()

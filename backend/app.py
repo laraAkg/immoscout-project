@@ -18,13 +18,13 @@ blob_client = blob_service_client.get_container_client(BLOB_CONTAINER)
 
 # Automatisch das neueste Modell finden
 blobs = list(blob_client.list_blobs())
-latest_blob = sorted(blobs, key=lambda b: int(b.name.split('-')[-1].replace('.joblib', '')))[-1]
+latest_blob = sorted(blobs, key=lambda b: int(b.name.split('-')[-1].replace('.pkl', '')))[-1]
 
-with open("best_immoscout_model.joblib", "wb") as download_file:
+with open("model/immoscout_model.pkl", "wb") as download_file:
     blob_stream = blob_client.download_blob(latest_blob.name)
     download_file.write(blob_stream.readall())
 
-model = joblib.load("best_immoscout_model.joblib")
+model = joblib.load("model/immoscout_model.pkl")
 
 # PLZ-Daten laden
 plz_ort = {}

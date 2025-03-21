@@ -23,7 +23,6 @@ class ImmoscoutSpider(scrapy.Spider):
 
         self.client = MongoClient(MONGO_URI)
 
-        self.db = self.client["immoscout_db"]
         self.collection = self.db["listings"]
 
         self.collection.delete_many({})
