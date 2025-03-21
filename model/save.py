@@ -9,6 +9,10 @@ blob_service_client = BlobServiceClient.from_connection_string(connect_str)
 model_file = "model/immoscout_model.pkl"
 container_name = "immoscout-models"
 
+# Überprüfen, ob die Datei existiert
+if not os.path.exists(model_file):
+    raise FileNotFoundError(f"❌ Die Datei '{model_file}' wurde nicht gefunden. Stelle sicher, dass das Modell gespeichert wurde.")
+
 # Container erstellen, falls nicht vorhanden
 try:
     blob_service_client.create_container(container_name)
