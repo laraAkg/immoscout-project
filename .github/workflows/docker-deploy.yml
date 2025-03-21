@@ -29,7 +29,7 @@ jobs:
           cd immo_spider
           scrapy crawl immoscout_spider -s CLOSESPIDER_PAGECOUNT=50 -o ../file.jl
           cd ../immo_spider/downloads
-          python ../mongo_import.py -c immoscout_data -i ../file.jl -u "${{ secrets.MONGODB_URI }}"
+          python ../mongo_import.py -c immoscout_data -i ../file.jl -u "${MONGODB_URI}"
 
       - name: Model Training & Save to Azure Blob
         env:
@@ -37,8 +37,8 @@ jobs:
           MONGODB_URI: ${{ secrets.MONGODB_URI }}
         run: |
           cd model
-          python model.py -u "${{ secrets.MONGODB_URI }}"
-          python save.py -c "${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}"
+          python model.py -u "${MONGODB_URI}"
+          python save.py -c "${AZURE_STORAGE_CONNECTION_STRING}"
 
   docker-deploy:
     needs: modelops
