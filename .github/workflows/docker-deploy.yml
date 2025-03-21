@@ -34,7 +34,6 @@ jobs:
           AZURE_STORAGE_CONNECTION_STRING: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}
           MONGO_URI: ${{ secrets.MONGO_URI }}
         run: |
-          cd model
           python model.py -u "${MONGO_URI}"
           python save.py -c "${AZURE_STORAGE_CONNECTION_STRING}"
 
@@ -70,4 +69,3 @@ jobs:
         with:
           app-name: immoscout
           slot-name: production
-          images: lara283.azurecr.io/immoscout:latest
