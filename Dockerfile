@@ -1,18 +1,18 @@
-# Optimiertes Dockerfile für Runtime-Container
-FROM python:3.12-slim
+# Basisimage mit Python 3.12
+FROM python:3.12.7
 
-WORKDIR /app
+# Arbeitsverzeichnis setzen
+WORKDIR /usr/src/app
 
-# Dependencies
-COPY requirements.txt ./
-RUN pip install --no-cache-dir -r requirements.txt
+# Code kopieren
+COPY . .
 
-# App und fertige Artefakte
-COPY app ./app
-COPY immo_spider/immoscout_listings.json ./immo_spider/immoscout_listings.json
-COPY best_immoscout_model.joblib ./best_immoscout_model.joblib
+# Abhängigkeiten installieren
+RUN pip install --upgrade pip && pip install -r requirements.txt
 
-# Azure-ready Startup mit Gunicorn
-CMD ["gunicorn", "app:app", "--chdir", "./app", "--bind", "0.0.0.0:5000"]
-
+# Flask App-Start definieren
+ENV FLASK_APP=/usr/src/app/app.py
 EXPOSE 5000
+
+# App starten (Dozenten-Style mit Flask)
+CMD ["python", "-m", "flask", "run", "--host=0.0.0.0", "--port=5000"]

@@ -1,0 +1,28 @@
+import os
+from azure.storage.blob import BlobServiceClient
+
+# Verbindung zum Azure Blob Storage herstellen
+connect_str = os.environ.get('AZURE_STORAGE_CONNECTION_STRING')
+blob_service_client = BlobServiceClient.from_connection_string(connect_str)
+
+# Modell und Zielcontainer
+model_file = "../best_immoscout_model.joblib"
+container_name = "immoscout-models"
+
+# Container erstellen, falls nicht vorhanden
+try:
+    blob_service_client.create_container(container_name)
+except Exception:
+    pass  # Container existiert evtl. schon
+
+# Versionierung über aufsteigende Nummer
+blobs = blob_service_client.get_container_client(container_name).list_blobs()
+existing_versions = [int(blob.name.split('-')[-1].replace('.joblib', '')) for blob in blobs if blob.name.startswith("immoscout-model")]
+new_version = max(existing_versions, default=0) + 1
+
+# Upload des Modells
+blob_client = blob_service_client.get_blob_client(container=container_name, blob=f"immoscout-model-{new_version}.joblib")
+with open(model_file, "rb") as data:
+    blob_client.upload_blob(data)
+
+print(f"✅ Modell wurde als Version {new_version} nach Azure Blob Storage hochgeladen!")

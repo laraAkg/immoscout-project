@@ -1,12 +1,12 @@
-name: CI/CD Pipeline - Scrapy + Model + Flask Deploy
+name: ModelOps CI/CD Pipeline
 
 on:
   push:
     branches: [ main ]
+  workflow_dispatch:
 
 jobs:
-  # 1️⃣ Scrapy + Modelltraining
-  data-and-train:
+  modelops:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
@@ -22,35 +22,30 @@ jobs:
           pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run Scrapy & Model Training
+      - name: Run Scrapy & MongoDB Upload
         env:
-          MONGO_URI: ${{ secrets.MONGO_URI }}  # <- MongoDB Atlas URI per GitHub Secret
+          MONGODB_URI: ${{ secrets.MONGODB_URI }}
         run: |
           cd immo_spider
-          scrapy crawl immoscout_spider -o ../immo_spider/immoscout_listings.json
-          cd ..
-          python model.py  # Modell greift ebenfalls auf MONGO_URI zu
+          scrapy crawl immoscout_spider -s CLOSESPIDER_PAGECOUNT=50 -o ../file.jl
+          cd ../immo_spider/downloads
+          python ../mongo_import.py -c immoscout_data -i ../file.jl -u "${{ secrets.MONGODB_URI }}"
 
-      - name: Upload build artifacts (JSON & Modell)
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-artifacts
-          path: |
-            immo_spider/immoscout_listings.json
-            best_immoscout_model.joblib
+      - name: Model Training & Save to Azure Blob
+        env:
+          AZURE_STORAGE_CONNECTION_STRING: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}
+          MONGODB_URI: ${{ secrets.MONGODB_URI }}
+        run: |
+          cd model
+          python model.py -u "${{ secrets.MONGODB_URI }}"
+          python save.py -c "${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}"
 
-  # 2️⃣ Docker Build & Azure Deployment
-  build-and-deploy:
-    needs: data-and-train
+  docker-deploy:
+    needs: modelops
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v3
-
-      - name: Download build artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: build-artifacts
 
       - name: Login to Azure Container Registry (ACR)
         uses: azure/docker-login@v1
@@ -67,7 +62,12 @@ jobs:
         run: |
           docker push lara283.azurecr.io/immoscout:latest
 
-      - name: Deploy to Azure Web App for Containers
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v2
         with:
           app-name: immoscout
