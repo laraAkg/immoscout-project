@@ -8,23 +8,25 @@ from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 import xgboost as xgb
 
-# 🟢 MongoDB Atlas URI aus Umgebungsvariable holen:
-MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017/")
+# MONGO_URI via ENV oder Fallback localhost
+MONGO_URI = os.getenv("MONGO_URI")
+
+if not MONGO_URI:
+    raise ValueError("❌ MONGO_URI ist nicht gesetzt! Bitte ENV-Variable oder Secret einrichten.")
 client = MongoClient(MONGO_URI)
 
 db = client["immoscout_db"]
 collection = db["listings"]
 
-# Daten aus MongoDB laden
+# Daten aus Mongo laden
 data = list(collection.find())
-
 df = pd.DataFrame(data)
 
-# _id entfernen, falls vorhanden
+# _id entfernen
 if "_id" in df.columns:
     df = df.drop(columns=["_id"])
 
-# Unnötige Spalten entfernen (Adresse etc.)
+# Unnötige Spalten (falls vorhanden)
 df = df.drop(columns=["location", "canton", "page"], errors="ignore")
 
 # Datentypen konvertieren
@@ -32,25 +34,30 @@ df["price"] = pd.to_numeric(df["price"], errors="coerce")
 df["rooms"] = pd.to_numeric(df["rooms"], errors="coerce")
 df["size"] = pd.to_numeric(df["size"], errors="coerce")
 
-# postal_code in string, damit wir One-Hot-Encoding machen
+# PLZ als string -> One-Hot-Encoding
 df["postal_code"] = df["postal_code"].astype(str)
 
-# Zeilen mit fehlenden Werten verwerfen
+# NaNs entfernen
 df = df.dropna(subset=["price", "rooms", "size", "postal_code"])
 
-# One-Hot-Encoding für postal_code
+# One-Hot-Encoding auf postal_code
 df = pd.get_dummies(df, columns=["postal_code"], prefix="plz")
 
-# Features & Zielvariable
+# Features & Ziel
 X = df.drop(columns=["price"])
 y = df["price"]
+
+# Falls es keine Daten gibt -> Notfallabbruch
+if X.shape[0] == 0:
+    print("❌ Keine Datensätze vorhanden. Training wird abgebrochen.")
+    client.close()
+    exit(1)
 
 # Train-Test-Split
 X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=0.2, random_state=42
 )
 
-# Verschiedene Modelle testen
 models = {
     "Random Forest": RandomForestRegressor(n_estimators=100, random_state=42),
     "Gradient Boosting": GradientBoostingRegressor(n_estimators=100, random_state=42),
@@ -62,7 +69,7 @@ best_model = None
 best_mae = float("inf")
 best_model_name = ""
 
-# Training & Evaluation
+# Modelle trainieren & auswerten
 for model_name, model in models.items():
     model.fit(X_train, y_train)
     y_pred = model.predict(X_test)
@@ -81,8 +88,7 @@ for model_name, model in models.items():
 
 print(f"\nDas beste Modell ist {best_model_name} mit einem MAE von {best_mae}")
 
-# Modell speichern
+# Speichern
 joblib.dump(best_model, "best_immoscout_model.joblib")
 
-# MongoDB-Verbindung schließen
 client.close()
