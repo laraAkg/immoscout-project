@@ -43,4 +43,5 @@ jobs:
         env:
           AZURE_STORAGE_CONNECTION_STRING: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}
         run: |
+          cd model
           python save.py -c "${AZURE_STORAGE_CONNECTION_STRING}"
