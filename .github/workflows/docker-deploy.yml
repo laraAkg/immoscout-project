@@ -24,20 +24,20 @@ jobs:
 
       - name: Run Scrapy & MongoDB Upload
         env:
-          MONGODB_URI: ${{ secrets.MONGODB_URI }}
+          MONGO_URI: ${{ secrets.MONGO_URI }}
         run: |
           cd immo_spider
           scrapy crawl immoscout_spider -s CLOSESPIDER_PAGECOUNT=50 -o ../file.jl
           cd ../immo_spider/downloads
-          python ../mongo_import.py -c immoscout_data -i ../file.jl -u "${MONGODB_URI}"
+          python ../mongo_import.py -c immoscout_data -i ../file.jl -u "${MONGO_URI}"
 
       - name: Model Training & Save to Azure Blob
         env:
           AZURE_STORAGE_CONNECTION_STRING: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}
-          MONGODB_URI: ${{ secrets.MONGODB_URI }}
+          MONGO_URI: ${{ secrets.MONGO_URI }}
         run: |
           cd model
-          python model.py -u "${MONGODB_URI}"
+          python model.py -u "${MONGO_URI}"
           python save.py -c "${AZURE_STORAGE_CONNECTION_STRING}"
 
   docker-deploy:

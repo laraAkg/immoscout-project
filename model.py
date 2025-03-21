@@ -9,10 +9,10 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 import xgboost as xgb
 
 # ENV-Variablen
-MONGO_URI = os.getenv("MONGODB_URI") or os.getenv("MONGO_URI")  # Flexibler
+MONGO_URI = os.getenv("MONGO_URI") or os.getenv("MONGO_URI")  # Flexibler
 
 if not MONGO_URI:
-    raise ValueError("❌ MONGODB_URI ist nicht gesetzt! Bitte ENV-Variable oder Secret einrichten.")
+    raise ValueError("❌ MONGO_URI ist nicht gesetzt! Bitte ENV-Variable oder Secret einrichten.")
 client = MongoClient(MONGO_URI)
 
 db = client["immoscout_db"]
