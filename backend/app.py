@@ -18,7 +18,15 @@ blob_client = blob_service_client.get_container_client(BLOB_CONTAINER)
 
 # Automatisch das neueste Modell finden
 blobs = list(blob_client.list_blobs())
-latest_blob = sorted(blobs, key=lambda b: int(b.name.split('-')[-1].replace('.pkl', '')))[-1]
+filtered_blobs = [b for b in blobs if b.name.endswith(".pkl")]  # Nur .pkl-Dateien berücksichtigen
+
+if not filtered_blobs:
+    raise FileNotFoundError("❌ Keine .pkl-Dateien im Blob Storage gefunden!")
+
+latest_blob = sorted(
+    filtered_blobs,
+    key=lambda b: int(b.name.split('-')[-1].replace('.pkl', ''))
+)[-1]
 
 with open("model/immoscout_model.pkl", "wb") as download_file:
     blob_stream = blob_client.download_blob(latest_blob.name)
