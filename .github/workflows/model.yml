@@ -30,7 +30,7 @@ jobs:
         run: |
           cd immo_spider
           scrapy crawl immoscout_spider -s CLOSESPIDER_PAGECOUNT=50
-          # Wenn dein Spider das direkt in Mongo speichert, reicht das hier
+          cd ..
 
       - name: Train Model
         env:
