@@ -17,21 +17,19 @@ jobs:
         with:
           python-version: '3.12'
 
-      # Dependencies mit requirements.txt installieren
       - name: Install dependencies
         run: |
           pip install --upgrade pip
           pip install -r requirements.txt
 
-      # ENV-Variable für deinen MongoDB Atlas URI
       - name: Run Scrapy & Model Training
         env:
-          MONGO_URI: ${{ secrets.MONGO_URI }}  # GitHub Actions Secret
+          MONGO_URI: ${{ secrets.MONGO_URI }}  # <- MongoDB Atlas URI per GitHub Secret
         run: |
           cd immo_spider
           scrapy crawl immoscout_spider -o ../immo_spider/immoscout_listings.json
           cd ..
-          python model.py
+          python model.py  # Modell greift ebenfalls auf MONGO_URI zu
 
       - name: Upload build artifacts (JSON & Modell)
         uses: actions/upload-artifact@v4
