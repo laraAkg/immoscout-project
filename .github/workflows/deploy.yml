@@ -1,29 +1,14 @@
 name: ModelOps (Build, Deploy)
-# Requires GitHub Action Secrets:
-#   AZURE_WEBAPP_NAME
-#   AZURE_WEBAPP_PUBLISH_PROFILE
-#
-# Hinweis:
-#   Deine Web App sollte eine App-Einstellung AZURE_STORAGE_CONNECTION_STRING besitzen,
-#   damit dein Container im Betrieb das Modell aus dem Blob laden kann (z.B. via app.py)
-
 on:
-  # Automatischer Trigger bei Push auf den main-Branch
-  push:
-    branches:
-      - main
-
-  # Manuelles Starten
-  workflow_dispatch:
-
-  # Automatischer Trigger NACH erfolgreichem Modell-Update
   workflow_run:
     workflows: ["ModelOps (Update Model)"]
     types:
       - completed
+    conclusions:
+      - success
 
 permissions:
-  packages: write      
+  packages: write
 
 jobs:
   build:
