@@ -1,0 +1,18 @@
+/* Zentrierung der Karte */
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    background-color: #f8faf9;
+}
+
+.card {
+    max-width: 600px; /* Maximale Breite der Karte */
+    padding: 40px 20px; /* Innenabstand */
+    margin: 40px 0; /* Margin oben und unten: 40px, links und rechts: 0 */
+    border-radius: 12px; /* Abgerundete Ecken */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); /* Schatten */
+    background-color: #ffffff;
+}

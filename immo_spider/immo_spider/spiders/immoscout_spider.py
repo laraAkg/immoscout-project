@@ -8,7 +8,7 @@ class ImmoscoutSpider(scrapy.Spider):
     name = "immoscout_spider"
     allowed_domains = ["immoscout24.ch"]
     start_urls = [
-        "https://www.immoscout24.ch/de/immobilien/mieten/ort-zuerich?pn=1",
+        "https://www.immoscout24.ch/de/immobilien/mieten/kanton-zuerich?pn=1",
     ]
 
     def __init__(self, *args, **kwargs):
@@ -75,7 +75,7 @@ class ImmoscoutSpider(scrapy.Spider):
 
         next_page = page_number + 1
         canton = response.url.split("-")[-1].split("?")[0]
-        next_page_url = f"https://www.immoscout24.ch/de/immobilien/mieten/ort-{canton}?pn={next_page}"
+        next_page_url = f"https://www.immoscout24.ch/de/immobilien/mieten/kanton-zuerich?pn={next_page}"
 
         yield scrapy.Request(next_page_url, callback=self.parse)
 
