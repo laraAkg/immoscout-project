@@ -67,7 +67,7 @@ class ImmoscoutSpider(scrapy.Spider):
         self.db = self.client["immoscout_db"]
         self.collection = self.db["listings"]
         self.collection.delete_many({})
-        self.logger.info("Alle alten Einträge in der MongoDB wurden gelöscht.")
+        self.logger.info("All old entries in the MongoDB have been deleted.")
 
     def parse(self, response):
         """
@@ -98,12 +98,12 @@ class ImmoscoutSpider(scrapy.Spider):
         page_number = int(response.url.split("pn=")[-1])
         listings = response.css("div.ResultList_listItem_j5Td_")
         self.logger.info(
-            f"Scraping Seite {page_number} - {len(listings)} Listings gefunden."
+            f"Scraping page {page_number} - {len(listings)} listings found."
         )
 
         if not listings:
             self.logger.info(
-                f"Seite {page_number} enthält keine Listings mehr. Beende den Crawl."
+                f"Page {page_number} contains no more listings. Stopping the crawl."
             )
             return
 
@@ -195,7 +195,7 @@ class ImmoscoutSpider(scrapy.Spider):
             try:
                 return float(price.replace(",", "."))
             except ValueError:
-                self.logger.warning(f"Preis konnte nicht konvertiert werden: {price}")
+                self.logger.warning(f"Price could not be converted: {price}")
                 return None
         return None
 
