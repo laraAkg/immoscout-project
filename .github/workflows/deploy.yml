@@ -8,6 +8,11 @@ name: ModelOps (Build, Deploy)
 #   damit dein Container im Betrieb das Modell aus dem Blob laden kann (z.B. via app.py)
 
 on:
+  # Automatischer Trigger bei Push auf den main-Branch
+  push:
+    branches:
+      - main
+
   # Manuelles Starten
   workflow_dispatch:
 

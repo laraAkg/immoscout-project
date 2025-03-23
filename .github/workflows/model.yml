@@ -4,6 +4,12 @@ name: ModelOps (Update Model)
 #   MONGO_URI
 
 on:
+  # Automatischer Trigger bei Push auf den main-Branch
+  push:
+    branches:
+      - main
+
+  # Manuelles Starten
   workflow_dispatch:
 
 jobs:
