@@ -12,22 +12,28 @@
 <body>
     <div class="card shadow-lg">
         <div class="card-body">
-            <h1 class="text-center mb-2">🔍 Immobilien Preisprognose</h1>            <p class="text-center text-muted mb-4">Geben Sie die Eckdaten Ihrer Immobilie ein und erhalten Sie eine präzise Preisvorhersage 🏡</p>
+            <h1 class="text-center mb-2">🔍 Immobilien Preisprognose</h1>
+            <p class="text-center text-muted mb-4">Geben Sie die Eckdaten Ihrer Immobilie ein und erhalten Sie eine
+                präzise Preisvorhersage 🏡</p>
             <form method="POST" action="/predict">
                 <div class="mb-3">
                     <label for="rooms" class="form-label">🛏️ Zimmeranzahl:</label>
-                    <input type="number" class="form-control" id="rooms" name="rooms" min="1" required step="0.5" placeholder="z.B. 3.5" value="{{ request.form.rooms if request.form.rooms }}">
+                    <input type="number" class="form-control" id="rooms" name="rooms" min="1" required step="0.5"
+                        placeholder="z.B. 3.5" value="{{ request.form.rooms if request.form.rooms }}">
                 </div>
                 <div class="mb-3">
                     <label for="size" class="form-label">📐 Wohnfläche (m²):</label>
-                    <input type="number" class="form-control" id="size" name="size" min="1" step="0.1" required placeholder="z.B. 75" value="{{ request.form.size if request.form.size }}">
+                    <input type="number" class="form-control" id="size" name="size" min="1" step="0.1" required
+                        placeholder="z.B. 75" value="{{ request.form.size if request.form.size }}">
                 </div>
                 <div class="mb-3">
-                    <label for="postal_code" class="form-label">📍 Postleitzahl + Ort:</label>
-                    <input list="plz-list" class="form-control" id="postal_code" name="postal_code" placeholder="PLZ oder Ort wählen" required value="{{ request.form.postal_code if request.form.postal_code }}">
+                    <label for="postal_code" class="form-label">📍 Postleitzahl:</label>
+                    <input list="plz-list" class="form-control" id="postal_code" name="postal_code"
+                        placeholder="PLZ oder Ort wählen" required
+                        value="{{ request.form.postal_code if request.form.postal_code }}">
                     <datalist id="plz-list">
                         {% for plz, ort in plz_ort.items() %}
-                            <option value="{{ plz }}">{{ plz }} - {{ ort }}</option>
+                        <option value="{{ plz }}">{{ plz }} - {{ ort }}</option>
                         {% endfor %}
                     </datalist>
                 </div>
@@ -35,14 +41,14 @@
             </form>
 
             {% if prediction %}
-                <div class="alert alert-success mt-4 text-center fw-bold" role="alert">
-                    {{ prediction }}
-                </div>
+            <div class="alert alert-success mt-4 text-center fw-bold" role="alert">
+                {{ prediction }}
+            </div>
             {% endif %}
             {% if error_message %}
-                <div class="alert alert-danger mt-4 text-center fw-bold" role="alert">
-                    ⚠️ {{ error_message }}
-                </div>
+            <div class="alert alert-danger mt-4 text-center fw-bold" role="alert">
+                ⚠️ {{ error_message }}
+            </div>
             {% endif %}
         </div>
     </div>
