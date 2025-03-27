@@ -37,7 +37,13 @@
                         {% endfor %}
                     </datalist>
                 </div>
+
+                {% if prediction %}
+                <button type="button" class="btn btn-secondary w-100 mt-2" onclick="resetForm()">Neuen Preis
+                    berechnen</button>
+                {% else %}
                 <button type="submit" class="btn btn-success w-100">Preis berechnen</button>
+                {% endif %}
             </form>
 
             {% if prediction %}
@@ -50,6 +56,13 @@
                 ⚠️ {{ error_message }}
             </div>
             {% endif %}
+
+            <script>
+                function resetForm() {
+                    document.querySelector("form").reset(); // Setzt alle Eingabefelder zurück
+                    window.location.href = "/"; // Lädt die Seite neu, um das Formular zu leeren
+                }
+            </script>
         </div>
     </div>
 </body>
