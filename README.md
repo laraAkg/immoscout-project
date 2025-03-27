@@ -4,7 +4,7 @@ End-to-End Lösung zur Vorhersage von Immobilienpreisen basierend auf gescrapten
 
 ## Spider
 
-* Scrape von Immobiliendaten (Zimmeranzahl, Wohnfläche, Preis, PLZ, Ort, Kanton) via Scrapy
+* Scrape von Immobiliendaten (Zimmeranzahl, Wohnfläche, Preis, PLZ & Ort) via Scrapy
 * Speicherung der Daten direkt in MongoDB (MongoDB Atlas)
 * Automatische Bereinigung der MongoDB Collection beim Crawl-Start
 * Bot-Detection-Problematik (z.B. keine JavaScript-Elemente wie ÖV-Distanzen)
