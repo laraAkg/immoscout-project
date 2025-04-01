@@ -98,12 +98,12 @@ def predict():
         postal_code = request.form["postal_code"]
 
         if not postal_code.isdigit():
-            raise ValueError("The postal code must be a number.")
+            raise ValueError("Die Postleitzahl muss eine Zahl sein.")
 
         postal_code = int(postal_code)
 
         if rooms <= 0 or size <= 0 or postal_code not in plz_ort:
-            raise ValueError("Invalid input values.")
+            raise ValueError("Ungültige Eingabewerte.")
 
         input_df = pd.DataFrame(
             [[rooms, size, postal_code]],
@@ -119,7 +119,7 @@ def predict():
         input_df = input_df[model.feature_names_in_]
 
         predicted_price = model.predict(input_df)[0]
-        prediction = f"Predicted price: CHF {predicted_price:.2f}"
+        prediction = f"Prognostizierter Preis: CHF {predicted_price:.2f}"
         logger.info(f"✅ Prediction successful: {prediction}")
 
     except Exception as e:
